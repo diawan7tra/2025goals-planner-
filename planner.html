@@ -1,0 +1,179 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner</title>
+    <script src="https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js"></script>
+
+    <style>
+        body {
+            font-family: Georgia, 'Times New Roman', Times, serif;
+            background-color: rgb(216, 216, 216);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1024px;
+            margin: auto;
+            background: rgb(233, 233, 233);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(7, 7, 7, 0.151);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid;
+            border-radius: 4px;
+            margin-right: 10px;
+            resize: vertical;
+        }
+
+        button{
+            padding: 10px 20px;
+            border: none;
+            background-color: rgb(154, 223, 85);
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        button:hover{
+            background-color   : rgb(165, 233, 98);
+            transition-duration: 29ms;
+        }
+
+        ul {
+            list-style-type: none;
+            padding        : 0;
+        }
+
+        li {
+            display        : flex;
+            justify-content: space-between;
+            padding        : 10px;
+            border-bottom  : 1px solid #ccc;
+        }
+
+        .delete-btn{
+            background-color: #dc3545;
+            color           : white;
+            border          : none;
+            border-radius   : 6px;
+            cursor          : pointer;
+            padding         : 5px 10px;
+        }
+
+        .delete-btn:hover{
+            background-color   : #dc3545;
+            transition-duration: 29ms;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>To do list</h1>
+        <div class="input-container">
+            <textarea id="noteInput" placeholder="Tulis catatan disini..."></textarea>
+            <button id = "addNoteBtn">Add List</button>
+        </div> 
+        <ul id="noteList"></ul>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5T2ovKf7HwS986J4WwEfxyXVJMWvqb5w",
+            authDomain: "st-prject-33beb.firebaseapp.com",
+            projectId: "st-prject-33beb",
+            storageBucket: "st-prject-33beb.firebasestorage.app",
+            messagingSenderId: "100244638523",
+            appId: "1:100244638523:web:bee67a40f3e81fd9a9451e",
+            measurementId: "G-KGL7SCPF58"
+        };
+      
+        // Initialize Firebase
+        const app  = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Fungsi Tambah Catatan
+        document.getElementById("addNoteBtn").addEventListener("click", async () => {
+            const noteInput = document.getElementById("noteInput");
+            const noteText  = noteInput.value.trim(); // validasi text
+
+            // Menambah Document
+            if (noteText) {
+                try{
+                    await addDoc(collection(db, "notes"), {
+                        text: noteText
+                    });
+                    noteInput.value = "";
+                    loadNotes();
+                }catch(e){
+                    console.error("Gagal menambah catatan: ", e);
+                }
+            } else{
+                alert("Silahkan masukl catatan!");
+            }
+        });
+
+        // Fungsi load semua catatan yand ada di database
+        async function loadNotes() {
+            const noteList = document.getElementById("noteList");
+            noteList.innerHTML = "";
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "notes"));
+                querySnapshot.forEach((docSnap) => {
+                    const noteText = docSnap.data().text;
+                    const noteId   = docSnap.id;
+                    const li       = document.createElement("li");
+
+                    li.textContent = noteText;
+
+
+                    const deleteBtn       = document.createElement("button");
+                    deleteBtn.textContent = "Hapus";
+                    deleteBtn.className   = "delete-btn";
+                    deleteBtn.addEventListener("click", () => deleteNote (noteId, li));
+                    li.appendChild(deleteBtn);
+                    noteList.appendChild(li);
+
+                });
+            } catch (e) {
+                console.error("Gagal memuat catatan:", e);
+            }
+        }
+
+
+        // Fungsi untuk menghapus catatan berdasarkan ID
+        async function deleteNote(noteId, lii) {
+            try {
+                await deleteDoc(doc(db, "notes", noteId)); //menghapus document dari firestore
+                li.remove(); //mengahpus dari web
+            } catch(e) {
+                console.error("Gagal mengahups catatan: ", e);
+            }
+        }
+
+        // load Notes
+        window.onload = loadNotes;
+    </script>
+</body>
+</html>
